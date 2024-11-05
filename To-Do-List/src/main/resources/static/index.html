@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <style>
+        /* Style de base */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        /* Titre principal */
+        h1 {
+            font-size: 2.5em;
+            color: #4CAF50;
+            margin-bottom: 0.5em;
+        }
+        
+        /* Section des tâches */
+        #tasks {
+            width: 100%;
+            max-width: 600px;
+            margin-top: 20px;
+        }
+
+        .task {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task h3 {
+            margin: 0;
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .task p {
+            margin: 5px 0;
+            color: #666;
+        }
+
+        /* Boutons */
+        .task button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        .task button:hover {
+            background-color: #45a049;
+        }
+
+        .completed {
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        /* Formulaire d'ajout de tâche */
+        #add-task-form {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        #add-task-form input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        #add-task-form button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        #add-task-form button:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <script>
+        async function getTasks() {
+            const response = await fetch('/api/tasks');
+            const tasks = await response.json();
+            document.getElementById('tasks').innerHTML = tasks.map(task => `
+                <div class="task">
+                    <div>
+                        <h3 class="${task.completed ? 'completed' : ''}">${task.title}</h3>
+                        <p>${task.description}</p>
+                        <p>Status: <span class="${task.completed ? 'completed' : ''}">${task.completed ? "Completed" : "Pending"}</span></p>
+                    </div>
+                    <div>
+                        <button onclick="toggleTask(${task.id}, ${task.completed})">Toggle Status</button>
+                        <button onclick="deleteTask(${task.id})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function addTask() {
+            const title = document.getElementById("taskTitle").value;
+            const description = document.getElementById("taskDescription").value;
+            await fetch('/api/tasks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title, description, completed: false })
+            });
+            document.getElementById("taskTitle").value = '';
+            document.getElementById("taskDescription").value = '';
+            getTasks();
+        }
+
+        async function deleteTask(id) {
+            await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+            getTasks();
+        }
+
+        async function toggleTask(id, completed) {
+            await fetch(`/api/tasks/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ completed: !completed })
+            });
+            getTasks();
+        }
+
+        document.addEventListener('DOMContentLoaded', getTasks);
+    </script>
+</head>
+<body>
+    <h1>To-Do List</h1>
+    <div id="tasks"></div>
+
+    <h2>Add New Task</h2>
+    <div id="add-task-form">
+        <input type="text" id="taskTitle" placeholder="Task Title">
+        <input type="text" id="taskDescription" placeholder="Task Description">
+        <button onclick="addTask()">Add Task</button>
+    </div>
+</body>
+</html>
